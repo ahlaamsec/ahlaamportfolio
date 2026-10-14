@@ -14,10 +14,16 @@ export const research = [
   { id: 'Q3', title: 'Secure and trustworthy AI', qs: ['What does human oversight of an AI security tool actually look like?', 'How do LLM systems fail under adversarial input?', 'What should an AI analyst be trusted with?'] },
 ];
 
+type LabImage = { file: string; caption: string };
 export type Lab = {
   slug: string; title: string; platform: string; status: string; tools: string[]; objective: string; findings: string;
-  full?: { target?: string; methodology?: string[]; recon?: string; enumeration?: string; exploitation?: string; privesc?: string;
-    table?: { title: string; desc: string; severity: string; impact: string }[]; remediation?: string[]; conclusion?: string; evidence?: { file: string; caption: string }[] };
+  full?: { target?: string; methodology?: string[];
+    recon?: string; reconImages?: LabImage[];
+    enumeration?: string; enumerationImages?: LabImage[];
+    exploitation?: string; exploitationImages?: LabImage[];
+    privesc?: string; privescImages?: LabImage[];
+    table?: { title: string; desc: string; severity: string; impact: string }[]; remediation?: string[]; conclusion?: string;
+    evidence?: LabImage[] };
 };
 const todo = 'TODO: add your write-up. No findings are shown until you supply them.';
 export const labs: Lab[] = [
@@ -30,8 +36,21 @@ export const labs: Lab[] = [
       target: '10.0.160.144 (apache.bctf.africa) — in scope for this engagement only',
       methodology: ['Intelligence gathering: service discovery and version identification', 'Vulnerability analysis: mapping identified services to known exploits', 'Exploitation: gaining initial access via the web service', 'Post-exploitation: lateral movement and privilege escalation'],
       recon: 'An Nmap scan (nmap -p- -vv -T4 -sV) identified open ports 22 (SSH) and 80 (HTTP). A follow-up curl request against port 80 fingerprinted the web server as Apache 2.4.49.',
+      reconImages: [
+        { file: 'image1.png', caption: 'Nmap scan showing open ports 22 (SSH) and 80 (HTTP)' },
+        { file: 'image2.png', caption: 'curl fingerprinting the web server and version' },
+      ],
       enumeration: 'searchsploit against "Apache 2.4.49" surfaced CVE-2021-41773, a path traversal and remote code execution vulnerability specific to that build, with a ready exploit script (50383.sh).',
+      enumerationImages: [
+        { file: 'image3.png', caption: 'searchsploit identifying the CVE-2021-41773 exploit' },
+        { file: 'image4.png', caption: 'Copying the searchsploit exploit script' },
+      ],
       exploitation: 'The exploit script was made executable and pointed at the target to traverse the filesystem and read /home/ETSCTF/.ssh/id_rsa. The recovered private key was saved locally, chmod 600 was applied, and an SSH session was opened as user ETSCTF — yielding the user flag.',
+      exploitationImages: [
+        { file: 'image5.png', caption: 'Successful extraction of the SSH private key via path traversal' },
+        { file: 'image6.png', caption: 'SSH login as user ETSCTF using the recovered key' },
+        { file: 'image7.png', caption: 'User flag retrieved' },
+      ],
       privesc: 'sudo -l showed ETSCTF could run /bin/cpio as root with NOPASSWD. Cross-referencing GTFOBins confirmed cpio\'s --rsh-command flag can spawn a shell. Running sudo cpio -o --rsh-command /bin/sh -F localhost: returned a root shell (whoami: root), yielding the root flag.',
       table: [
         { title: 'CVE-2021-41773', desc: 'Apache 2.4.49 path traversal / RCE', severity: 'Critical', impact: 'Remote code execution and sensitive file disclosure' },
@@ -39,15 +58,6 @@ export const labs: Lab[] = [
       ],
       remediation: ['Upgrade Apache HTTP Server to 2.4.51 or later immediately.', 'Review /etc/sudoers and remove the NOPASSWD entry for cpio; use restricted alternatives if archiving is genuinely needed.'],
       conclusion: 'The host was fully compromised through a well-known, critical, unpatched web-server vulnerability combined with an overly permissive sudo rule. A regular patch cycle and periodic sudoers auditing would have prevented the entire chain.',
-      evidence: [
-        { file: 'image1.png', caption: 'Nmap scan showing open ports 22 (SSH) and 80 (HTTP)' },
-        { file: 'image2.png', caption: 'curl fingerprinting the web server and version' },
-        { file: 'image3.png', caption: 'searchsploit identifying the CVE-2021-41773 exploit' },
-        { file: 'image4.png', caption: 'Copying the searchsploit exploit script' },
-        { file: 'image5.png', caption: 'Successful extraction of the SSH private key via path traversal' },
-        { file: 'image6.png', caption: 'SSH login as user ETSCTF using the recovered key' },
-        { file: 'image7.png', caption: 'User flag retrieved' },
-      ],
     },
   },
   { slug: 'sqlpad-cve-2022-0944', title: 'SQLPad v6.9.0', platform: 'EchoCTF', status: 'Write-up pending', tools: ['Kali Linux', 'Nmap', 'Burp Suite'], objective: 'Investigate CVE-2022-0944 in SQLPad v6.9.0.', findings: todo },

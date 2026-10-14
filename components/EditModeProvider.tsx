@@ -46,7 +46,7 @@ export default function EditModeProvider({ children }: { children: ReactNode }) 
       }
       return data.error || 'Could not log in.';
     } catch {
-      return 'Network error — try again.';
+      return 'Network error. Please try again.';
     }
   }
 

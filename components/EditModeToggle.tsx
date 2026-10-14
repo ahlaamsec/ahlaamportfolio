@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useEditMode } from './EditModeProvider';
 
 export default function EditModeToggle() {
@@ -28,7 +29,7 @@ export default function EditModeToggle() {
       {!authed && (
         <>
           <button className="edit-fab" onClick={() => setOpen((o) => !o)} aria-label="Site editor login">
-            🔒
+            Editor
           </button>
           {open && (
             <form className="edit-panel" onSubmit={submit}>
@@ -53,6 +54,12 @@ export default function EditModeToggle() {
           <button className="btn" onClick={() => setEditing(!editing)}>
             {editing ? 'Stop editing' : 'Edit this site'}
           </button>
+          <Link className="btn ghost" href="/inbox">
+            Inbox
+          </Link>
+          <Link className="btn ghost" href="/trash">
+            Trash
+          </Link>
           <button className="btn ghost" onClick={logout}>
             Log out
           </button>

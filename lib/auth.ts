@@ -2,19 +2,27 @@ import crypto from 'crypto';
 
 const SESSION_HOURS = 12;
 
-function sign(expiry: number): string {
+// A missing or short secret would let anyone forge a login cookie, so
+// signing and checking both refuse to work without a proper one.
+function getSecret(): string | null {
   const secret = process.env.EDIT_SECRET || '';
+  return secret.length >= 16 ? secret : null;
+}
+
+function sign(expiry: number): string {
+  const secret = getSecret() as string;
   return crypto.createHmac('sha256', secret).update(String(expiry)).digest('hex');
 }
 
 export function createSessionCookie(): string {
+  if (!getSecret()) throw new Error('EDIT_SECRET must be set to at least 16 characters.');
   const expiry = Date.now() + SESSION_HOURS * 60 * 60 * 1000;
   const sig = sign(expiry);
   return `${expiry}.${sig}`;
 }
 
 export function isValidSession(cookieValue: string | undefined): boolean {
-  if (!cookieValue) return false;
+  if (!cookieValue || !getSecret()) return false;
   const parts = cookieValue.split('.');
   if (parts.length !== 2) return false;
   const [expiryStr, sig] = parts;

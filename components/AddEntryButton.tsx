@@ -2,8 +2,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEditMode } from './EditModeProvider';
+import BlockEditor, { splitBlocks } from './BlockEditor';
 
-type Kind = 'writing' | 'lab';
+type Kind = 'writing' | 'lab' | 'report';
+
+// The standard report layout from the content bible.
+const REPORT_SECTIONS = [
+  'Objective', 'Environment', 'Reconnaissance', 'Methodology', 'Findings',
+  'Evidence', 'Technical notes', 'What I learned', 'Full write-up',
+];
 
 export default function AddEntryButton() {
   const { authed } = useEditMode();
@@ -23,12 +30,13 @@ export default function AddEntryButton() {
   const [tools, setTools] = useState('');
   const [objective, setObjective] = useState('');
   const [findings, setFindings] = useState('');
+  const [sections, setSections] = useState<Record<string, string>>({});
 
   if (!authed) return null;
 
   function reset() {
     setTitle(''); setCategory(''); setType(''); setTags(''); setContent('');
-    setPlatform(''); setStatus('Write-up pending'); setTools(''); setObjective(''); setFindings('');
+    setPlatform(''); setStatus('Write-up pending'); setTools(''); setObjective(''); setFindings(''); setSections({});
     setError(null);
   }
 
@@ -36,10 +44,20 @@ export default function AddEntryButton() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const payload =
-      kind === 'writing'
-        ? { kind, title, category, type, tags, content }
-        : { kind, title, platform, status, tools, objective, findings };
+    let payload: any;
+    if (kind === 'writing') payload = { kind, title, category, type, tags, content };
+    else if (kind === 'lab') payload = { kind, title, platform, status, tools, objective, findings };
+    else {
+      const parts: string[] = [];
+      let obj = '';
+      for (const name of REPORT_SECTIONS) {
+        const blocks = splitBlocks(sections[name] || '');
+        if (!blocks.length) continue;
+        if (name === 'Objective') obj = blocks.find((b) => !b.startsWith('![') && !b.startsWith('#')) || '';
+        parts.push(`## ${name}`, ...blocks);
+      }
+      payload = { kind: 'lab', title, platform, status, tools, objective: obj, findings: parts.join('\n\n') };
+    }
     try {
       const res = await fetch('/api/entries', {
         method: 'POST',
@@ -57,20 +75,21 @@ export default function AddEntryButton() {
       setBusy(false);
       router.push(data.path);
     } catch {
-      setError('Network error — try again.');
+      setError('Network error. Please try again.');
       setBusy(false);
     }
   }
 
   return (
     <>
-      <button className="add-fab" onClick={() => setOpen(true)} aria-label="Add a new writeup">+</button>
+      <button className="add-fab" onClick={() => setOpen(true)} aria-label="Add a new writeup">Add</button>
       {open && (
         <div className="add-modal-backdrop" onClick={() => setOpen(false)}>
           <div className="add-modal" onClick={(e) => e.stopPropagation()}>
             <div className="chips" role="group" aria-label="Entry type">
               <button type="button" aria-pressed={kind === 'writing'} onClick={() => setKind('writing')}>Writing</button>
-              <button type="button" aria-pressed={kind === 'lab'} onClick={() => setKind('lab')}>Cyber Lab</button>
+              <button type="button" aria-pressed={kind === 'lab'} onClick={() => setKind('lab')}>Cyber Lab (quick)</button>
+              <button type="button" aria-pressed={kind === 'report'} onClick={() => setKind('report')}>Report (standard format)</button>
             </div>
             <form onSubmit={submit}>
               <label className="mono">Title</label>
@@ -86,6 +105,27 @@ export default function AddEntryButton() {
                   <input value={tags} onChange={(e) => setTags(e.target.value)} />
                   <label className="mono">Content (separate paragraphs with a blank line)</label>
                   <textarea rows={10} value={content} onChange={(e) => setContent(e.target.value)} required />
+                </>
+              ) : kind === 'report' ? (
+                <>
+                  <label className="mono">Platform (e.g. TryHackMe, EchoCTF, Independent)</label>
+                  <input value={platform} onChange={(e) => setPlatform(e.target.value)} />
+                  <label className="mono">Status and difficulty</label>
+                  <input value={status} onChange={(e) => setStatus(e.target.value)} />
+                  <label className="mono">Tools (comma-separated)</label>
+                  <input value={tools} onChange={(e) => setTools(e.target.value)} />
+                  <p className="note" style={{ margin: '.8rem 0 .2rem' }}>
+                    Fill in only the sections you need. In each one, add text, headings and screenshots in the order you want them to appear. You can also add a Word document to any section. Empty sections are left out.
+                  </p>
+                  {REPORT_SECTIONS.map((name) => (
+                    <details key={name} className="report-section" open={name === 'Objective'}>
+                      <summary>{name}{sections[name] ? ' ✓' : ''}</summary>
+                      <BlockEditor
+                        value={sections[name] || ''}
+                        onChange={(v) => setSections((prev) => ({ ...prev, [name]: v }))}
+                      />
+                    </details>
+                  ))}
                 </>
               ) : (
                 <>

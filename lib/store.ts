@@ -51,6 +51,12 @@ export async function setOverride(id: string, value: string): Promise<boolean> {
   return setJSON(OVERRIDES_KEY, current);
 }
 
+export async function setOverrides(values: Record<string, string>): Promise<boolean> {
+  const current = await getOverrides();
+  Object.assign(current, values);
+  return setJSON(OVERRIDES_KEY, current);
+}
+
 // ---- custom (user-added) entries ----
 
 export type CustomWritingEntry = {
@@ -93,4 +99,66 @@ export async function addCustomLab(entry: CustomLabEntry): Promise<boolean> {
   const list = await getCustomLabs();
   list.unshift(entry);
   return setJSON(CUSTOM_LABS_KEY, list);
+}
+
+export async function deleteCustomEntry(kind: 'writing' | 'lab', slug: string): Promise<boolean> {
+  if (kind === 'writing') {
+    const list = await getCustomWriting();
+    return setJSON(CUSTOM_WRITING_KEY, list.filter((e) => e.slug !== slug));
+  }
+  const list = await getCustomLabs();
+  return setJSON(CUSTOM_LABS_KEY, list.filter((e) => e.slug !== slug));
+}
+
+// ---- soft-delete for built-in (data.ts) entries ----
+// Built-in entries can't be removed from source at runtime, so we keep a
+// "hidden" id list instead. Anything in here is treated as deleted everywhere.
+
+const DELETED_KEY = 'portfolio:deleted';
+
+export async function getDeletedIds(): Promise<string[]> {
+  return getJSON<string[]>(DELETED_KEY, []);
+}
+
+export async function softDelete(id: string): Promise<boolean> {
+  const list = await getDeletedIds();
+  if (!list.includes(id)) list.push(id);
+  return setJSON(DELETED_KEY, list);
+}
+
+export async function restoreDeleted(id: string): Promise<boolean> {
+  const list = await getDeletedIds();
+  return setJSON(DELETED_KEY, list.filter((x) => x !== id));
+}
+
+// ---- uploaded images ----
+// Images are stored once under their own key and referenced from text as
+// /api/image/<id>, so write-ups stay small and fast to load.
+
+const IMG_PREFIX = 'portfolio:img:';
+
+export async function saveImageData(id: string, dataUrl: string): Promise<boolean> {
+  return setJSON(IMG_PREFIX + id, dataUrl);
+}
+
+export async function getImageData(id: string): Promise<string | null> {
+  return getJSON<string | null>(IMG_PREFIX + id, null);
+}
+
+// ---- contact messages ----
+
+const MESSAGES_KEY = 'portfolio:messages';
+export type ContactMessage = { id: string; name: string; email: string; message: string; at: string };
+
+export async function getMessages(): Promise<ContactMessage[]> {
+  return getJSON<ContactMessage[]>(MESSAGES_KEY, []);
+}
+export async function addMessage(m: ContactMessage): Promise<boolean> {
+  const list = await getMessages();
+  list.unshift(m);
+  return setJSON(MESSAGES_KEY, list.slice(0, 300));
+}
+export async function deleteMessage(id: string): Promise<boolean> {
+  const list = await getMessages();
+  return setJSON(MESSAGES_KEY, list.filter((m) => m.id !== id));
 }

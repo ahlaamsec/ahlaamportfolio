@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isValidSession } from '@/lib/auth';
-import { getOverrides, setOverride, isStoreConfigured } from '@/lib/store';
+import { externalizeImages } from '@/lib/images';
+import { getOverrides, setOverride, setOverrides, isStoreConfigured } from '@/lib/store';
 
 const COOKIE = 'edit_session';
 
@@ -21,11 +22,16 @@ export async function POST(req: NextRequest) {
     );
   }
   const body = await req.json().catch(() => null);
+  if (body?.values && typeof body.values === 'object') {
+    const clean: Record<string, string> = {};
+    for (const [k, v] of Object.entries(body.values)) if (typeof v === 'string') clean[k] = v;
+    return NextResponse.json({ ok: await setOverrides(clean) });
+  }
   const id = body?.id;
   const value = body?.value;
   if (typeof id !== 'string' || typeof value !== 'string') {
     return NextResponse.json({ ok: false, error: 'Invalid payload.' }, { status: 400 });
   }
-  const saved = await setOverride(id, value);
+  const saved = await setOverride(id, await externalizeImages(value));
   return NextResponse.json({ ok: saved });
 }
