@@ -1,6 +1,8 @@
-import Link from 'next/link';
 import EditableText from '@/components/EditableText';
+import PageHead from '@/components/PageHead';
+
 export const metadata = { title: 'PetanqueAI case study | Ahlaam Abdallah' };
+
 const s: [string, string, string][] = [
   ['problem', 'Problem', 'Running a pétanque tournament by hand means tracking teams, brackets and scores across several formats.'],
   ['system', 'System', 'Next.js frontend, a Python/Flask and FastAPI backend, MongoDB (NoSQL) as the primary data store, with PostgreSQL and SQLAlchemy also part of the stack per the CV. Supports single elimination, round robin, double elimination and Swiss.'],
@@ -11,13 +13,26 @@ const s: [string, string, string][] = [
   ['learned', 'What I learned', 'TODO'],
   ['changed', 'What I would change', 'TODO'],
 ];
+
 export default function P() {
-  return (<article>
-    <p><Link href="/#projects">&larr; Projects</Link></p>
-    <p className="eyebrow">KNUST final-year project · 2025</p><h1>PetanqueAI</h1>
-    {s.map(([id, h, t], i) => <details key={id} open={i < 2}>
-      <summary>{h}</summary>
-      <EditableText id={`project:petanqueai:${id}`} multiline value={t} />
-    </details>)}
-  </article>);
+  return (<>
+    <PageHead
+      kicker="KNUST final-year project · 2025"
+      title="PetanqueAI"
+      back={['Projects', '/#projects']}
+      lede="Tournament management for four formats, plus a Random Forest model that predicts scores."
+    />
+    <section className="band band--bold">
+      <div className="wrap narrow doc">
+        {s.map(([id, h, t], i) => (
+          <section className="doc-block" key={id} data-reveal>
+            <h2 className="doc-block__title"><span className="mono">{String(i + 1).padStart(2, '0')}</span> {h}</h2>
+            <div className="doc-block__body">
+              <EditableText id={`project:petanqueai:${id}`} multiline value={t} />
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  </>);
 }

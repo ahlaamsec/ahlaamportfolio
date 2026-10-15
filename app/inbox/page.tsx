@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useEditMode } from '@/components/EditModeProvider';
+import PageHead from '@/components/PageHead';
 
 type Msg = { id: string; name: string; email: string; message: string; at: string };
 
@@ -19,21 +19,24 @@ export default function Inbox() {
     load();
   }
 
-  if (!authed) return <article><h1>Inbox</h1><p className="note">Log in with the lock button to read your messages.</p></article>;
-  return (
-    <article>
-      <p><Link href="/">&larr; Home</Link></p>
-      <h1>Inbox</h1>
-      {msgs === null && <p className="note">Loading…</p>}
-      {msgs && msgs.length === 0 && <p className="note">No messages yet.</p>}
-      {msgs?.map((m) => (
-        <div className="card" key={m.id} style={{ marginTop: '1rem' }}>
-          <p><strong>{m.name}</strong> · <a href={`mailto:${m.email}`}>{m.email}</a></p>
-          <p className="note">{new Date(m.at).toLocaleString()}</p>
-          <p style={{ whiteSpace: 'pre-wrap' }}>{m.message}</p>
-          <button className="btn ghost" onClick={() => remove(m.id)}>Delete</button>
-        </div>
-      ))}
-    </article>
-  );
+  return (<>
+    <PageHead kicker="Editor" title="Inbox" back={['Home', '/']} />
+    <section className="band band--bold">
+      <div className="wrap narrow">
+        {!authed && <p className="muted">Log in with the Editor button to read your messages.</p>}
+        {authed && msgs === null && <p className="muted">Loading…</p>}
+        {authed && msgs && msgs.length === 0 && <p className="muted">No messages yet.</p>}
+        {authed && msgs?.map((m) => (
+          <article className="card message" key={m.id}>
+            <div className="message__head">
+              <p><strong>{m.name}</strong> · <a href={`mailto:${m.email}`}>{m.email}</a></p>
+              <p className="mono">{new Date(m.at).toLocaleString()}</p>
+            </div>
+            <p className="message__body">{m.message}</p>
+            <button className="btn btn--ghost btn--sm" onClick={() => remove(m.id)}>Delete</button>
+          </article>
+        ))}
+      </div>
+    </section>
+  </>);
 }

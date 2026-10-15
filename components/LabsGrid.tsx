@@ -1,24 +1,22 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Lab } from '@/content/data';
 import { useEditMode } from './EditModeProvider';
 
-type GridLab = Pick<Lab, 'slug' | 'title' | 'platform' | 'status' | 'objective' | 'findings'> & { full?: unknown; builtin?: boolean };
+type GridLab = Pick<Lab, 'slug' | 'title' | 'platform' | 'status' | 'objective' | 'findings'> & { tools?: string[]; full?: unknown; builtin?: boolean };
 
 export default function LabsGrid({ staticLabs }: { staticLabs: Lab[] }) {
   const [custom, setCustom] = useState<GridLab[]>([]);
   const [deleted, setDeleted] = useState<string[]>([]);
   const { authed } = useEditMode();
   const [managing, setManaging] = useState(false);
-  const router = useRouter();
 
   function refresh() {
     fetch('/api/entries')
       .then((r) => r.json())
       .then((d) => {
-        setCustom((d.labs || []).map((l: any) => ({ ...l, builtin: false })));
+        setCustom((d.labs || []).map((l: GridLab) => ({ ...l, builtin: false })));
         setDeleted(d.deleted || []);
       })
       .catch(() => {});
@@ -44,22 +42,29 @@ export default function LabsGrid({ staticLabs }: { staticLabs: Lab[] }) {
   return (
     <>
       {authed && (
-        <div className="hero-actions" style={{ margin: '1rem 0 0' }}>
-          <button className="btn ghost" onClick={() => setManaging((m) => !m)}>{managing ? 'Done' : 'Manage entries'}</button>
+        <div className="actions" style={{ margin: '0 0 1.5rem' }}>
+          <button className="btn btn--ghost btn--sm" onClick={() => setManaging((m) => !m)}>{managing ? 'Done' : 'Manage entries'}</button>
         </div>
       )}
-      <div className="rows" style={{ marginTop: "1rem" }}>
-        {all.map((l) => (
-          <div key={l.slug} style={{ position: 'relative' }}>
-            <Link className="tile" href={`/cyber-lab/${l.slug}`} style={'full' in l && l.full ? undefined : { opacity: 0.85 }}>
-              <div className={'full' in l && l.full ? 'thumb alt' : 'thumb'} style={'full' in l && l.full ? undefined : { background: 'var(--surface-2)' }} />
-              <p className="tag">{'full' in l && l.full ? l.platform : `${l.platform} · ${l.status}`}</p>
-              <h3>{l.title}</h3>
-              <p className="note">{'full' in l && l.full ? l.findings : l.objective}</p>
-            </Link>
-            {managing && <button className="btn ghost" style={{ position: 'absolute', top: '.6rem', right: '.6rem' }} onClick={(e) => remove(l, e)}>Delete</button>}
-          </div>
-        ))}
+      <div className="card-grid card-grid--2">
+        {all.map((l, i) => {
+          const full = Boolean(l.full);
+          return (
+            <div key={l.slug} className="lab-card-wrap" data-reveal style={{ '--d': i % 2 } as React.CSSProperties}>
+              <Link className={`lab-card${full ? ' lab-card--full' : ''}`} href={`/cyber-lab/${l.slug}`}>
+                <div className="lab-card__top">
+                  <span className="mono">{l.platform}</span>
+                  <span className={`status${full ? ' status--done' : ''}`}>{l.status}</span>
+                </div>
+                <h3>{l.title}</h3>
+                <p className="muted">{full ? l.findings : l.objective}</p>
+                {l.tools && l.tools.length > 0 && <ul className="tags">{l.tools.map((t) => <li key={t}>{t}</li>)}</ul>}
+                <span className="arrow" aria-hidden>→</span>
+              </Link>
+              {managing && <button className="btn btn--sm btn--danger lab-card__delete" onClick={(e) => remove(l, e)}>Delete</button>}
+            </div>
+          );
+        })}
       </div>
     </>
   );

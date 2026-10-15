@@ -1,6 +1,7 @@
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",      // Next.js needs inline scripts without a nonce setup
+  // Next.js needs inline scripts without a nonce setup; the dev server also needs eval.
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",

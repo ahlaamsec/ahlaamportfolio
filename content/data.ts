@@ -1,6 +1,7 @@
 // EDIT HERE. Everything on the site reads from this file. "TODO" = not yet provided; nothing below is invented.
 export const site = {
   name: 'Ahlaam Abdallah',
+  handle: 'AhlaamSec',
   email: 'ahlaamwumpini@gmail.com',
   phone: '+233 50 653 6453',
   github: 'https://github.com/Ahlaamsec',

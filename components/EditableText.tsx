@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useContent } from './ContentProvider';
 import { useEditMode } from './EditModeProvider';
+import { saveOverrideResult } from '@/lib/saveOverride';
+import SaveIndicator, { type SaveStatus } from './SaveIndicator';
 
 type Tag = 'p' | 'span' | 'h1' | 'h2' | 'h3' | 'div';
 
@@ -18,40 +20,61 @@ export default function EditableText({ id, value, as = 'p', multiline = false, c
   const { editing } = useEditMode();
   const current = overrides[id] ?? value;
   const [draft, setDraft] = useState(current);
-  const savingRef = useRef(false);
+  const [status, setStatus] = useState<SaveStatus>({ state: 'idle' });
+  const dirty = useRef(false);
+  // Saves run one after another so a newer edit is never dropped or overtaken.
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
-    setDraft(current);
+    if (!dirty.current) setDraft(current);
   }, [current]);
 
-  async function save() {
-    if (draft === current || savingRef.current) return;
-    savingRef.current = true;
-    setLocalOverride(id, draft);
-    await fetch('/api/content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, value: draft }),
-    }).catch(() => {});
-    savingRef.current = false;
+  function change(v: string) {
+    dirty.current = true;
+    setDraft(v);
+    if (status.state !== 'idle') setStatus({ state: 'idle' });
+  }
+
+  function save() {
+    if (!dirty.current) return;
+    const v = draft;
+    const previous = current;
+    setLocalOverride(id, v);
+    setStatus({ state: 'saving' });
+    queue.current = queue.current.then(async () => {
+      const result = await saveOverrideResult(id, v);
+      if (result.ok) {
+        dirty.current = false;
+        setStatus({ state: 'saved' });
+      } else {
+        // Put the published text back, but keep the typed text in the field for a retry.
+        setLocalOverride(id, previous);
+        setStatus({ state: 'error', error: result.error });
+      }
+    });
   }
 
   if (editing) {
-    return multiline ? (
-      <textarea
-        className={`editable-field ${className || ''}`}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={save}
-        rows={Math.max(3, draft.split('\n').length)}
-      />
-    ) : (
-      <input
-        className={`editable-field ${className || ''}`}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={save}
-      />
+    return (
+      <span className="editable">
+        {multiline ? (
+          <textarea
+            className={`editable-field ${className || ''}`}
+            value={draft}
+            onChange={(e) => change(e.target.value)}
+            onBlur={save}
+            rows={Math.max(3, draft.split('\n').length)}
+          />
+        ) : (
+          <input
+            className={`editable-field ${className || ''}`}
+            value={draft}
+            onChange={(e) => change(e.target.value)}
+            onBlur={save}
+          />
+        )}
+        <SaveIndicator status={status} onRetry={save} />
+      </span>
     );
   }
 

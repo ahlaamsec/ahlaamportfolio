@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useEditMode } from '@/components/EditModeProvider';
+import PageHead from '@/components/PageHead';
 
 export default function TrashPage() {
   const { authed } = useEditMode();
@@ -9,7 +9,7 @@ export default function TrashPage() {
   const [busy, setBusy] = useState<string | null>(null);
 
   function refresh() {
-    fetch('/api/entries').then(r => r.json()).then(d => setDeleted(d.deleted || [])).catch(() => {});
+    fetch('/api/entries').then((r) => r.json()).then((d) => setDeleted(d.deleted || [])).catch(() => {});
   }
   useEffect(refresh, []);
 
@@ -24,31 +24,36 @@ export default function TrashPage() {
     refresh();
   }
 
-  if (!authed) {
-    return <article><h1>Trash</h1><p className="note">Log in with the 🔒 button to view and restore deleted entries.</p></article>;
-  }
-
-  return (<article>
-    <h1>Trash</h1>
-    <p className="lede">Only built-in entries (the ones baked into the site's source) show up here — deleting one of those just hides it rather than erasing it, so you can always bring it back. Entries you added yourself through the + button are removed for good when deleted.</p>
-    <ul className="list">
-      {deleted.length === 0 && <li>Nothing in the trash.</li>}
-      {deleted.map((id) => {
-        const [kind, ...rest] = id.split(':');
-        const slug = rest.join(':');
-        const href = kind === 'writing' ? `/writing/${slug}` : `/cyber-lab/${slug}`;
-        return (
-          <li key={id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="mono">{id}</span>
-            <span style={{ display: 'flex', gap: '.6rem' }}>
-              <Link className="btn ghost" href={href}>View (hidden)</Link>
-              <button className="btn" onClick={() => restore(id)} disabled={busy === id}>
-                {busy === id ? 'Restoring…' : 'Restore'}
-              </button>
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  </article>);
+  return (<>
+    <PageHead
+      kicker="Editor"
+      title="Trash"
+      back={['Home', '/']}
+      lede="Built-in entries are hidden rather than erased when you delete them, so you can bring them back here. Entries you added yourself are removed for good."
+    />
+    <section className="band band--bold">
+      <div className="wrap narrow">
+        {!authed && <p className="muted">Log in with the Editor button to view and restore deleted entries.</p>}
+        {authed && (
+          <ul className="rows">
+            {deleted.length === 0 && <li className="muted empty">Nothing in the trash.</li>}
+            {deleted.map((id) => {
+              const [kind, ...rest] = id.split(':');
+              return (
+                <li key={id} className="rows__item">
+                  <div className="row row--static row--trash">
+                    <span className="mono">{kind === 'writing' ? 'Writing' : 'Cyber Lab'}</span>
+                    <span className="row__title">{rest.join(':')}</span>
+                  </div>
+                  <button className="btn btn--sm" onClick={() => restore(id)} disabled={busy === id}>
+                    {busy === id ? 'Restoring…' : 'Restore'}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </section>
+  </>);
 }

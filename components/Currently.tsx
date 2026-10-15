@@ -17,15 +17,17 @@ export default function Currently() {
   const visible = ROWS.filter((r) => editing || (overrides[r.id] || '').trim());
   if (!visible.length) return null;
   return (
-    <section id="now">
-      <p className="eyebrow">Currently</p>
-      <div className="card now-card">
-        {visible.map((r) => (
-          <div className="now-row" key={r.id}>
-            <span className="mono">{r.label}</span>
-            <EditableText id={r.id} as="span" value="" />
-          </div>
-        ))}
+    <section id="now" className="band band--bold now">
+      <div className="wrap now__inner">
+        <p className="kicker">Currently</p>
+        <dl className="now__list">
+          {visible.map((r) => (
+            <div className="now-row" key={r.id}>
+              <dt className="mono">{r.label}</dt>
+              <dd><EditableText id={r.id} as="span" value="" /></dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );

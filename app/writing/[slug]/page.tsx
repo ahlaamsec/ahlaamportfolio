@@ -5,7 +5,10 @@ import { notFound } from 'next/navigation';
 import EditableText from '@/components/EditableText';
 import WritingBody from '@/components/WritingBody';
 import DeleteButton from '@/components/DeleteButton';
+import PageHead from '@/components/PageHead';
+
 export const dynamic = 'force-dynamic';
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const piece = fullWriting.find((p) => p.slug === slug) || (await getCustomWriting()).find((p) => p.slug === slug);
@@ -18,38 +21,43 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     twitter: { card: 'summary_large_image', title: piece.title, description },
   };
 }
-export function generateStaticParams() { return fullWriting.map(p => ({ slug: p.slug })); }
+export function generateStaticParams() { return fullWriting.map((p) => ({ slug: p.slug })); }
+
 export default async function PieceDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const deleted = await getDeletedIds();
+  const [deleted, custom] = await Promise.all([getDeletedIds(), getCustomWriting()]);
   if (deleted.includes(`writing:${slug}`)) return notFound();
 
-  let piece: { slug: string; title: string; category: string; type: string; tags: string[]; mins: number; date: string; status: string; content: string[] } | undefined =
-    fullWriting.find(p => p.slug === slug);
-  const builtin = Boolean(piece);
-  if (!piece) {
-    const custom = await getCustomWriting();
-    piece = custom.find(p => p.slug === slug);
-  }
+  const builtinPiece = fullWriting.find((p) => p.slug === slug);
+  const piece = builtinPiece ?? custom.find((p) => p.slug === slug);
   if (!piece) return notFound();
-  const all = [...(await getCustomWriting()), ...fullWriting].filter((p) => !deleted.includes(`writing:${p.slug}`));
-  const idx = all.findIndex((p) => p.slug === piece!.slug);
+  const all = [...custom, ...fullWriting].filter((p) => !deleted.includes(`writing:${p.slug}`));
+  const idx = all.findIndex((p) => p.slug === piece.slug);
   const prev = idx > 0 ? all[idx - 1] : undefined;
   const next = idx >= 0 && idx < all.length - 1 ? all[idx + 1] : undefined;
-  return (<article>
-    <p><Link href="/writing">&larr; Writing Archive</Link></p>
-    <p className="eyebrow">{piece.category} · {piece.type}</p>
-    <EditableText id={`writing:${piece.slug}:title`} as="h1" value={piece.title} />
-    <p className="note">{piece.date} · {piece.mins} min read · {piece.tags.join(', ')}</p>
-    <div className="card prose" style={{ marginTop: '1.5rem' }}>
-      <WritingBody slug={piece.slug} defaultContent={piece.content} />
-    </div>
-    <nav className="pager" aria-label="More writing">
-      {prev ? <Link href={`/writing/${prev.slug}`}>&larr; {prev.title}</Link> : <span />}
-      {next ? <Link href={`/writing/${next.slug}`}>{next.title} &rarr;</Link> : <span />}
-    </nav>
-    <div style={{ marginTop: '1rem' }}>
-      <DeleteButton kind="writing" slug={piece.slug} title={piece.title} builtin={builtin} redirectTo="/writing" />
-    </div>
-  </article>);
+
+  return (<>
+    <PageHead kicker={`${piece.category} · ${piece.type}`} back={['Writing archive', '/writing']}>
+      <div className="hero__in" style={{ '--d': 1 } as React.CSSProperties}>
+        <EditableText id={`writing:${piece.slug}:title`} as="h1" className="display display--page" value={piece.title} />
+      </div>
+      <p className="mono hero__in" style={{ '--d': 2 } as React.CSSProperties}>
+        {piece.date} · {piece.mins} min read{piece.tags.length > 0 && ` · ${piece.tags.join(', ')}`}
+      </p>
+    </PageHead>
+    <section className="band band--bright">
+      <div className="wrap narrow">
+        <div className="prose">
+          <WritingBody slug={piece.slug} defaultContent={piece.content} />
+        </div>
+        <nav className="pager" aria-label="More writing">
+          {prev ? <Link href={`/writing/${prev.slug}`} className="pager__link"><span className="mono">← Previous</span>{prev.title}</Link> : <span />}
+          {next ? <Link href={`/writing/${next.slug}`} className="pager__link pager__link--next"><span className="mono">Next →</span>{next.title}</Link> : <span />}
+        </nav>
+        <div className="doc__actions">
+          <DeleteButton kind="writing" slug={piece.slug} title={piece.title} builtin={Boolean(builtinPiece)} redirectTo="/writing" />
+        </div>
+      </div>
+    </section>
+  </>);
 }

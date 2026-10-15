@@ -40,21 +40,47 @@ async function setJSON(key: string, value: unknown): Promise<boolean> {
 }
 
 // ---- text overrides (existing edit-in-place feature) ----
+// Each field is its own hash entry, so saves to different fields (the block
+// editor, colour pickers) never overwrite each other. Values saved before this
+// change live in the old single-JSON key and are merged in underneath.
+
+const OVERRIDES_HASH_KEY = 'portfolio:overrides:h';
+
+async function command(args: string[]): Promise<{ ok: boolean; result: unknown }> {
+  if (!STORE_URL || !STORE_TOKEN) return { ok: false, result: null };
+  try {
+    const res = await fetch(STORE_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${STORE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(args),
+      cache: 'no-store',
+    });
+    if (!res.ok) return { ok: false, result: null };
+    const data = await res.json();
+    return { ok: !data?.error, result: data?.result ?? null };
+  } catch {
+    return { ok: false, result: null };
+  }
+}
 
 export async function getOverrides(): Promise<Record<string, string>> {
-  return getJSON<Record<string, string>>(OVERRIDES_KEY, {});
+  const [legacy, flat] = await Promise.all([
+    getJSON<Record<string, string>>(OVERRIDES_KEY, {}),
+    command(['HGETALL', OVERRIDES_HASH_KEY]).then((r) => r.result),
+  ]);
+  const out: Record<string, string> = { ...legacy };
+  if (Array.isArray(flat)) for (let i = 0; i + 1 < flat.length; i += 2) out[String(flat[i])] = String(flat[i + 1]);
+  return out;
 }
 
 export async function setOverride(id: string, value: string): Promise<boolean> {
-  const current = await getOverrides();
-  current[id] = value;
-  return setJSON(OVERRIDES_KEY, current);
+  return (await command(['HSET', OVERRIDES_HASH_KEY, id, value])).ok;
 }
 
 export async function setOverrides(values: Record<string, string>): Promise<boolean> {
-  const current = await getOverrides();
-  Object.assign(current, values);
-  return setJSON(OVERRIDES_KEY, current);
+  const pairs = Object.entries(values).flat();
+  if (pairs.length === 0) return true;
+  return (await command(['HSET', OVERRIDES_HASH_KEY, ...pairs])).ok;
 }
 
 // ---- custom (user-added) entries ----
