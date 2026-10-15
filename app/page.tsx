@@ -7,7 +7,7 @@ import Currently from '@/components/Currently';
 import ContactForm from '@/components/ContactForm';
 
 export const dynamic = 'force-dynamic';
-const FEATURED = ['security-warning-nobody-read', 'sql-injection-first-year', 'ai-analyst-trust', 'baba-sulley'];
+const FEATURED = ['diary-day39-reds-1', 'diary-day19-define-yourself-yinka', 'diary-day10', 'diary-day22-appreciation'];
 
 const skills: { label: string; color: string }[] = [
   { label: 'Python', color: 'var(--blue)' }, { label: 'SQL', color: 'var(--teal)' }, { label: 'JavaScript', color: 'var(--amber)' },
@@ -90,7 +90,7 @@ export default async function Home() {
         ))}
       </div>
       <p style={{ marginTop: '1rem' }}>
-        <Link href="/writing">Full writing archive →</Link> · <Link href="/writing-sample">One-page writing sample (PDF) →</Link> · <a href="/feed.xml">RSS</a>
+        <Link href="/writing">Full writing archive →</Link> · <a href="/feed.xml">RSS</a>
       </p>
     </section>
 
