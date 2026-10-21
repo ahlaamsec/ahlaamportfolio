@@ -27,3 +27,8 @@ export async function saveOverride(id: string, value: string): Promise<boolean> 
 export async function saveOverrides(values: Record<string, string>): Promise<boolean> {
   return (await post({ values })).ok;
 }
+
+// Removes edits so those fields show their original text again.
+export async function resetOverrides(ids: string[]): Promise<SaveResult> {
+  return post({ reset: ids });
+}

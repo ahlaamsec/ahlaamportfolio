@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Lab } from '@/content/data';
 import { useEditMode } from './EditModeProvider';
+import { useContent } from './ContentProvider';
+import { withLabMeta } from '@/lib/profile';
 
 type GridLab = Pick<Lab, 'slug' | 'title' | 'platform' | 'status' | 'objective' | 'findings'> & { tools?: string[]; full?: unknown; builtin?: boolean };
 
@@ -10,6 +12,7 @@ export default function LabsGrid({ staticLabs }: { staticLabs: Lab[] }) {
   const [custom, setCustom] = useState<GridLab[]>([]);
   const [deleted, setDeleted] = useState<string[]>([]);
   const { authed } = useEditMode();
+  const { overrides } = useContent();
   const [managing, setManaging] = useState(false);
 
   function refresh() {
@@ -26,7 +29,7 @@ export default function LabsGrid({ staticLabs }: { staticLabs: Lab[] }) {
   const all: GridLab[] = [
     ...custom,
     ...staticLabs.map((l) => ({ ...l, builtin: true })),
-  ].filter((l) => !deleted.includes(`lab:${l.slug}`));
+  ].filter((l) => !deleted.includes(`lab:${l.slug}`)).map((l) => withLabMeta({ ...l, tools: l.tools || [] }, overrides));
 
   async function remove(l: GridLab, e: React.MouseEvent) {
     e.preventDefault();

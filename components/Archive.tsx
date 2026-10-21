@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Piece } from '@/content/data';
 import { useContent } from './ContentProvider';
 import { useEditMode } from './EditModeProvider';
+import { withWritingMeta } from '@/lib/profile';
 
 type ArchivePiece = Piece & { slug?: string; builtin?: boolean };
 
@@ -34,8 +35,8 @@ export default function Archive({ items }: { items: ArchivePiece[] }) {
     const merged = [...custom, ...items.map((i) => ({ ...i, builtin: true }))];
     return merged
       .filter((p) => !p.slug || !deleted.includes(`writing:${p.slug}`))
-      // Show edited titles in the list, not just on the piece's own page.
-      .map((p) => (p.slug ? { ...p, title: overrides[`writing:${p.slug}:title`] || p.title } : p));
+      // Show edited details in the list, not just on the piece's own page.
+      .map((p) => (p.slug ? withWritingMeta({ ...p, slug: p.slug }, overrides) : p));
   }, [custom, items, deleted, overrides]);
 
   const cats = useMemo(() => ['All', ...Array.from(new Set(all.map((i) => i.category)))], [all]);

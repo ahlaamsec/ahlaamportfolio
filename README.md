@@ -117,3 +117,26 @@ When logged in, the ⚙ button opens colors (four presets plus a picker for each
 ## Look and feel
 
 The design is deliberately plain: serif headings, flat sections with thin rules instead of boxed cards, text links instead of glowing buttons, and no gradients. Colors still come from the Settings panel.
+
+## Owner dashboard (/admin)
+
+Go to `/admin` (or press **Dashboard** in the editor bar) and log in with your edit password. Everything about the site is run from here:
+
+- **Visitors**: people on the site right now, visitors today / last 7 / 30 / 90 days / all time, a visitors-per-day chart (with a table view), most viewed pages, which sites sent people to you, countries and devices.
+- **Write-ups & labs**: every entry in one searchable list. Start a new write-up or lab report, upload Word/Markdown files, open any entry straight in edit mode, change its title, category, type, date, tags, platform, status, objective or tools under **Details**, hide or delete it, and restore hidden ones.
+- **Home page**: show or hide each home-page section, pick the four featured essays, and edit the scrolling strip, tools list, terminal lines and "Currently".
+- **Profile & CV**: profile photo, upload a new CV PDF (up to 3 MB), and your name, handle, location, email, phone, GitHub and LinkedIn.
+- **Design**: colours and presets, headings and body fonts, text size, capital or normal-case headings, and the menu text.
+- **Messages**: what people sent through the contact form, with Reply by email.
+- **All edits**: every change you have ever saved, each with an **Undo** that puts the original back.
+- **Password**: change your login password (you need the current one). It is stored only as a salted hash.
+
+In edit mode every heading, paragraph and button label on the home, CV, Writing and Cyber Lab pages can now be clicked and changed, including lab titles, objectives and tools.
+
+### How visitors are counted
+
+Counting happens on your own server and in the same Upstash database, so there is no outside tracker and no cookie banner is needed. A visitor is a one-way daily fingerprint of IP address and browser, so the same person counts once per day and cannot be followed from day to day; raw IP addresses are never stored. Bots, your own visits while logged in, the dashboard itself, and browsers with "Do Not Track" or Global Privacy Control switched on are not counted. Countries only appear on Vercel (they come from Vercel's location header). Daily numbers are kept for about 13 months.
+
+### Forgot your password?
+
+The dashboard can't help if you can't log in, so the way back in is through Vercel: open the project, go to **Settings → Environment Variables**, give `EDIT_PASSWORD` a new value, then **Redeploy** the latest deployment. The new value becomes your password and replaces any password you set in the dashboard. You can then log in and choose a different one under **Password** if you like.

@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEditMode } from './EditModeProvider';
 
@@ -18,6 +18,13 @@ export default function UploadPanel() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // The dashboard opens this panel with a window event.
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener('open-upload', onOpen);
+    return () => window.removeEventListener('open-upload', onOpen);
+  }, []);
 
   if (!authed) return null;
 

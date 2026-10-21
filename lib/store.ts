@@ -63,6 +63,25 @@ async function command(args: string[]): Promise<{ ok: boolean; result: unknown }
   }
 }
 
+// Several commands in one round trip. Each entry is that command's result (null on error).
+export async function pipeline(cmds: (string | number)[][]): Promise<unknown[] | null> {
+  if (cmds.length === 0) return [];
+  if (!STORE_URL || !STORE_TOKEN) return null;
+  try {
+    const res = await fetch(`${STORE_URL}/pipeline`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${STORE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(cmds.map((c) => c.map(String))),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data) ? data.map((d: any) => (d && !d.error ? d.result ?? null : null)) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getOverrides(): Promise<Record<string, string>> {
   const [legacy, flat] = await Promise.all([
     getJSON<Record<string, string>>(OVERRIDES_KEY, {}),
@@ -187,4 +206,41 @@ export async function addMessage(m: ContactMessage): Promise<boolean> {
 export async function deleteMessage(id: string): Promise<boolean> {
   const list = await getMessages();
   return setJSON(MESSAGES_KEY, list.filter((m) => m.id !== id));
+}
+
+// ---- uploaded files (currently just the CV PDF) ----
+
+const FILE_PREFIX = 'portfolio:file:';
+
+export async function saveFileData(name: string, dataUrl: string): Promise<boolean> {
+  return setJSON(FILE_PREFIX + name, dataUrl);
+}
+
+export async function getFileData(name: string): Promise<string | null> {
+  return getJSON<string | null>(FILE_PREFIX + name, null);
+}
+
+// Removes edits so the original text from content/data.ts shows again.
+export async function deleteOverrides(ids: string[]): Promise<boolean> {
+  if (ids.length === 0) return true;
+  const legacy = await getJSON<Record<string, string>>(OVERRIDES_KEY, {});
+  if (ids.some((id) => id in legacy)) {
+    for (const id of ids) delete legacy[id];
+    if (!(await setJSON(OVERRIDES_KEY, legacy))) return false;
+  }
+  return (await command(['HDEL', OVERRIDES_HASH_KEY, ...ids])).ok;
+}
+
+// ---- dashboard password ----
+// A password set from the dashboard, stored only as a salted scrypt hash.
+
+const PASSWORD_KEY = 'portfolio:password';
+export type PasswordRecord = { salt: string; hash: string; envTag: string; at: string };
+
+export async function getPasswordRecord(): Promise<PasswordRecord | null> {
+  return getJSON<PasswordRecord | null>(PASSWORD_KEY, null);
+}
+
+export async function setPasswordRecord(rec: PasswordRecord): Promise<boolean> {
+  return setJSON(PASSWORD_KEY, rec);
 }

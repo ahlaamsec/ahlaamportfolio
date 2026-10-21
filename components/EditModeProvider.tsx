@@ -28,7 +28,11 @@ export default function EditModeProvider({ children }: { children: ReactNode }) 
   useEffect(() => {
     fetch('/api/auth')
       .then((r) => r.json())
-      .then((d) => setAuthed(Boolean(d.authed)))
+      .then((d) => {
+        setAuthed(Boolean(d.authed));
+        // Links from the dashboard add ?edit=1 to open a page straight in edit mode.
+        if (d.authed && new URLSearchParams(window.location.search).get('edit') === '1') setEditing(true);
+      })
       .catch(() => {});
   }, []);
 

@@ -1,13 +1,5 @@
 // EDIT HERE. Everything on the site reads from this file. "TODO" = not yet provided; nothing below is invented.
-export const site = {
-  name: 'Ahlaam Abdallah',
-  handle: 'AhlaamSec',
-  email: 'ahlaamwumpini@gmail.com',
-  phone: '+233 50 653 6453',
-  github: 'https://github.com/Ahlaamsec',
-  linkedin: 'https://www.linkedin.com/in/ahlaam-abdallah-a3085b23b/',
-  cv: '/Ahlaam_Abdallah_CV.pdf', // drop your PDF in /public with this name
-};
+export { site } from './site';
 
 export const research = [
   { id: 'Q1', title: 'Human-centred security', qs: ['Why do people ignore warnings that are technically correct?', 'How does documentation change security behaviour?', 'What makes phishing awareness stick?'] },

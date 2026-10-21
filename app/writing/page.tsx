@@ -1,3 +1,4 @@
+import EditableText from '@/components/EditableText';
 import Archive from '@/components/Archive';
 import PageHead from '@/components/PageHead';
 import { writing } from '@/content/data';
@@ -12,9 +13,9 @@ export default function W() {
   }));
   return (<>
     <PageHead
-      kicker="100+ notes from the field"
-      title="The writing archive"
-      lede="Essays and technical notes on human behaviour, communication, cybersecurity and career, pulled from 100+ days of writing."
+      kicker={<EditableText id="page:writing:kicker" as="span" value="100+ notes from the field" />}
+      title={<EditableText id="page:writing:title" as="span" value="The writing archive" />}
+      lede={<EditableText id="page:writing:lede" as="p" multiline value="Essays and technical notes on human behaviour, communication, cybersecurity and career, pulled from 100+ days of writing." />}
     />
     <section className="band band--bold">
       <div className="wrap"><Archive items={items} /></div>

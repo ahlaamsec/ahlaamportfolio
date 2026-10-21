@@ -1,11 +1,17 @@
-import { certs, site, experience, leadership, education, languages } from '@/content/data';
+import { certs, experience, leadership, education, languages } from '@/content/data';
+import { getOverrides } from '@/lib/store';
+import { profileFrom } from '@/lib/profile';
 import EditableText from '@/components/EditableText';
+import CertList from '@/components/CertList';
 import EditableList from '@/components/EditableList';
 import PageHead from '@/components/PageHead';
 
 export const metadata = { title: 'CV | Ahlaam Abdallah' };
 
-export default function CV() {
+export const dynamic = 'force-dynamic';
+
+export default async function CV() {
+  const site = profileFrom(await getOverrides());
   return (<>
     <PageHead kicker="Curriculum vitae" title={site.name}>
       <div className="actions hero__in" style={{ '--d': 2 } as React.CSSProperties}>
@@ -20,7 +26,7 @@ export default function CV() {
     <section className="band band--bold">
       <div className="wrap narrow doc">
         <section className="doc-block" data-reveal>
-          <h2 className="doc-block__title">Education</h2>
+          <EditableText id="cv:title:education" as="h2" className="doc-block__title" value="Education" />
           <div className="doc-block__body">
             <h3>{education.school}</h3>
             <EditableText id="cv:education:standing" value={`${education.degree}. ${education.standing}.`} />
@@ -29,13 +35,13 @@ export default function CV() {
         </section>
 
         <section className="doc-block" data-reveal>
-          <h2 className="doc-block__title">Experience</h2>
+          <EditableText id="cv:title:experience" as="h2" className="doc-block__title" value="Experience" />
           <ol className="timeline timeline--compact doc-block__body">
             {experience.map((e) => (
               <li key={e.org}>
-                <p className="mono timeline__when">{e.when}</p>
+                <EditableText id={`cv:experience:${e.org}:when`} className="mono timeline__when" value={e.when} />
                 <div>
-                  <h3>{e.role}</h3>
+                  <EditableText id={`cv:experience:${e.org}:role`} as="h3" value={e.role} />
                   <p className="timeline__org">{e.org}</p>
                   <EditableList id={`cv:experience:${e.org}`} value={e.bullets.map((b) => `- ${b}`).join('\n')} />
                 </div>
@@ -45,12 +51,12 @@ export default function CV() {
         </section>
 
         <section className="doc-block" data-reveal>
-          <h2 className="doc-block__title">Leadership &amp; community</h2>
+          <EditableText id="cv:title:leadership" as="h2" className="doc-block__title" value="Leadership & community" />
           <div className="doc-block__body">
             <div className="card-grid card-grid--2">
               {leadership.map((l) => (
                 <div className="card" key={l.org + l.role}>
-                  <h3>{l.role}</h3>
+                  <EditableText id={`cv:leadership:${l.org}:role`} as="h3" value={l.role} />
                   <p className="mono">{l.org}{l.when ? ` · ${l.when}` : ''}</p>
                   {l.note && <EditableText id={`cv:leadership:${l.org}`} className="muted small" multiline value={l.note} />}
                 </div>
@@ -61,14 +67,12 @@ export default function CV() {
         </section>
 
         <section className="doc-block" id="certs" data-reveal>
-          <h2 className="doc-block__title">Certifications &amp; training</h2>
-          <ul className="cert-list doc-block__body">
-            {certs.map((c) => <li key={c.name}><span>{c.name}</span><span className="mono">{c.issuer}</span></li>)}
-          </ul>
+          <EditableText id="cv:title:certs" as="h2" className="doc-block__title" value="Certifications & training" />
+          <CertList value={certs.map((c) => `- ${c.name} — ${c.issuer}`).join('\n')} />
         </section>
 
         <section className="doc-block" data-reveal>
-          <h2 className="doc-block__title">Languages</h2>
+          <EditableText id="cv:title:languages" as="h2" className="doc-block__title" value="Languages" />
           <div className="doc-block__body">
             <EditableText id="cv:languages" value={languages.join(', ')} />
           </div>

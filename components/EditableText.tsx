@@ -13,9 +13,11 @@ type Props = {
   as?: Tag;
   multiline?: boolean;
   className?: string;
+  // Set when the text sits inside a link or button, so clicking the field doesn't navigate.
+  inLink?: boolean;
 };
 
-export default function EditableText({ id, value, as = 'p', multiline = false, className }: Props) {
+export default function EditableText({ id, value, as = 'p', multiline = false, className, inLink = false }: Props) {
   const { overrides, setLocalOverride } = useContent();
   const { editing } = useEditMode();
   const current = overrides[id] ?? value;
@@ -56,7 +58,10 @@ export default function EditableText({ id, value, as = 'p', multiline = false, c
 
   if (editing) {
     return (
-      <span className="editable">
+      <span
+        className="editable"
+        onClick={inLink ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
+      >
         {multiline ? (
           <textarea
             className={`editable-field ${className || ''}`}

@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { getPasswordRecord } from './store';
 
 const SESSION_HOURS = 12;
 
@@ -45,4 +46,37 @@ export function checkPassword(input: string): boolean {
     return false;
   }
   return crypto.timingSafeEqual(a, b);
+}
+
+// ---- password set from the dashboard ----
+// It is tied to the current EDIT_PASSWORD: changing EDIT_PASSWORD in Vercel
+// makes the stored one stop counting, which is the way back in if it is forgotten.
+
+export const MIN_PASSWORD_LENGTH = 10;
+
+function envTag(): string {
+  return crypto.createHmac('sha256', getSecret() || '').update(`pw|${process.env.EDIT_PASSWORD || ''}`).digest('hex').slice(0, 24);
+}
+
+function scrypt(password: string, salt: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, 64, (err, key) => (err ? reject(err) : resolve(key)));
+  });
+}
+
+export async function hashPassword(password: string): Promise<{ salt: string; hash: string; envTag: string; at: string }> {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = (await scrypt(password, salt)).toString('hex');
+  return { salt, hash, envTag: envTag(), at: new Date().toISOString() };
+}
+
+// Checks against the dashboard password when one is active, otherwise EDIT_PASSWORD.
+export async function verifyPassword(input: string): Promise<boolean> {
+  const rec = await getPasswordRecord();
+  if (rec && rec.envTag === envTag() && rec.salt && rec.hash) {
+    const got = await scrypt(input, rec.salt);
+    const want = Buffer.from(rec.hash, 'hex');
+    return got.length === want.length && crypto.timingSafeEqual(got, want);
+  }
+  return checkPassword(input);
 }

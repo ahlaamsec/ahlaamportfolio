@@ -54,11 +54,8 @@ export default function EditModeToggle() {
           <button className="btn" onClick={() => setEditing(!editing)}>
             {editing ? 'Stop editing' : 'Edit this site'}
           </button>
-          <Link className="btn ghost" href="/inbox">
-            Inbox
-          </Link>
-          <Link className="btn ghost" href="/trash">
-            Trash
+          <Link className="btn ghost" href="/admin">
+            Dashboard
           </Link>
           <button className="btn ghost" onClick={logout}>
             Log out

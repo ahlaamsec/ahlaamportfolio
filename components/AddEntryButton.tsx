@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEditMode } from './EditModeProvider';
 import BlockEditor, { splitBlocks } from './BlockEditor';
@@ -31,6 +31,17 @@ export default function AddEntryButton() {
   const [objective, setObjective] = useState('');
   const [findings, setFindings] = useState('');
   const [sections, setSections] = useState<Record<string, string>>({});
+
+  // The dashboard opens this form with a window event, optionally on a given tab.
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const k = (e as CustomEvent).detail;
+      if (k === 'writing' || k === 'lab' || k === 'report') setKind(k);
+      setOpen(true);
+    };
+    window.addEventListener('open-add-entry', onOpen);
+    return () => window.removeEventListener('open-add-entry', onOpen);
+  }, []);
 
   if (!authed) return null;
 

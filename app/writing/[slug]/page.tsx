@@ -1,5 +1,6 @@
 import { fullWriting } from '@/content/data';
-import { getCustomWriting, getDeletedIds } from '@/lib/store';
+import { getCustomWriting, getDeletedIds, getOverrides } from '@/lib/store';
+import { withWritingMeta } from '@/lib/profile';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import EditableText from '@/components/EditableText';
@@ -11,8 +12,9 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const piece = fullWriting.find((p) => p.slug === slug) || (await getCustomWriting()).find((p) => p.slug === slug);
-  if (!piece) return {};
+  const found = fullWriting.find((p) => p.slug === slug) || (await getCustomWriting()).find((p) => p.slug === slug);
+  if (!found) return {};
+  const piece = withWritingMeta(found, await getOverrides());
   const description = (piece.content.find((b) => !b.startsWith('![') && !b.startsWith('#')) || '').slice(0, 200);
   return {
     title: `${piece.title} | Ahlaam Abdallah`,
@@ -25,13 +27,14 @@ export function generateStaticParams() { return fullWriting.map((p) => ({ slug: 
 
 export default async function PieceDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [deleted, custom] = await Promise.all([getDeletedIds(), getCustomWriting()]);
+  const [deleted, custom, overrides] = await Promise.all([getDeletedIds(), getCustomWriting(), getOverrides()]);
   if (deleted.includes(`writing:${slug}`)) return notFound();
 
   const builtinPiece = fullWriting.find((p) => p.slug === slug);
-  const piece = builtinPiece ?? custom.find((p) => p.slug === slug);
+  const found = builtinPiece ?? custom.find((p) => p.slug === slug);
+  const piece = found && withWritingMeta(found, overrides);
   if (!piece) return notFound();
-  const all = [...custom, ...fullWriting].filter((p) => !deleted.includes(`writing:${p.slug}`));
+  const all = [...custom, ...fullWriting].filter((p) => !deleted.includes(`writing:${p.slug}`)).map((p) => withWritingMeta(p, overrides));
   const idx = all.findIndex((p) => p.slug === piece.slug);
   const prev = idx > 0 ? all[idx - 1] : undefined;
   const next = idx >= 0 && idx < all.length - 1 ? all[idx + 1] : undefined;

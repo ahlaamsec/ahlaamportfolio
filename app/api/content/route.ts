@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isValidSession } from '@/lib/auth';
 import { externalizeImages } from '@/lib/images';
-import { getOverrides, setOverride, setOverrides, isStoreConfigured } from '@/lib/store';
+import { getOverrides, setOverride, setOverrides, deleteOverrides, isStoreConfigured } from '@/lib/store';
 
 const COOKIE = 'edit_session';
 
@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
     );
   }
   const body = await req.json().catch(() => null);
+  // { reset: [ids] } puts those fields back to their original text.
+  if (Array.isArray(body?.reset)) {
+    const ids = body.reset.filter((x: unknown): x is string => typeof x === 'string');
+    return NextResponse.json({ ok: await deleteOverrides(ids) });
+  }
   if (body?.values && typeof body.values === 'object') {
     const clean: Record<string, string> = {};
     for (const [k, v] of Object.entries(body.values)) if (typeof v === 'string') clean[k] = v;

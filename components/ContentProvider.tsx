@@ -4,12 +4,14 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 type Ctx = {
   overrides: Record<string, string>;
   setLocalOverride: (id: string, value: string) => void;
+  removeLocalOverride: (id: string) => void;
   configured: boolean;
 };
 
 const ContentContext = createContext<Ctx>({
   overrides: {},
   setLocalOverride: () => {},
+  removeLocalOverride: () => {},
   configured: false,
 });
 
@@ -35,8 +37,16 @@ export default function ContentProvider({ children }: { children: ReactNode }) {
     setOverrides((prev) => ({ ...prev, [id]: value }));
   }
 
+  function removeLocalOverride(id: string) {
+    setOverrides((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }
+
   return (
-    <ContentContext.Provider value={{ overrides, setLocalOverride, configured }}>
+    <ContentContext.Provider value={{ overrides, setLocalOverride, removeLocalOverride, configured }}>
       {children}
     </ContentContext.Provider>
   );

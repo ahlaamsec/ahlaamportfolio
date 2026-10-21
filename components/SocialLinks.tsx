@@ -1,10 +1,14 @@
-import { site } from '@/content/data';
+'use client';
+import { useContent } from './ContentProvider';
+import { profileFrom } from '@/lib/profile';
 
 export default function SocialLinks() {
+  const { overrides } = useContent();
+  const p = profileFrom(overrides);
   const links: [string, string][] = [
-    ['GitHub', site.github],
-    ['LinkedIn', site.linkedin],
-    ['Email', `mailto:${site.email}`],
+    ['GitHub', p.github],
+    ['LinkedIn', p.linkedin],
+    ['Email', `mailto:${p.email}`],
   ];
   return (
     <ul className="socials">

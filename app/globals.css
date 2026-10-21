@@ -405,6 +405,101 @@ input[type=checkbox],input[type=radio]{width:auto;display:inline-block}
 .report-section{border:1px solid var(--rule);border-radius:12px;padding:.5rem .7rem;margin:.5rem 0;background:var(--surface)}
 .report-section summary{cursor:pointer;font-weight:600;padding:.2rem 0}
 
+
+/* =========================================================
+   Owner dashboard (/admin)
+   ========================================================= */
+.is-admin .edit-toggle,.is-admin .add-fab,.is-admin .upload-fab,.is-admin .settings-fab{display:none}
+.admin{padding-top:calc(var(--header-h) + 2.5rem);min-height:100vh}
+.admin--login .display{margin-bottom:2rem}
+.admin-login{display:flex;flex-direction:column;gap:.7rem;max-width:22rem}
+.admin__head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;padding-bottom:1.5rem;border-bottom:1px solid var(--rule)}
+.admin__title{font-size:clamp(2.6rem,6vw,4.5rem)}
+.admin-warn{border:1px solid var(--accent);border-radius:var(--radius-sm);padding:.8rem 1rem;margin:1.2rem 0;color:var(--ink);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.admin-tabs{display:flex;gap:.2rem;overflow-x:auto;margin:1.2rem 0 2rem;border-bottom:1px solid var(--rule);scrollbar-width:none}
+.admin-tabs button{flex:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--mute);font:500 .78rem/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;padding:1rem .9rem;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;margin-bottom:-1px}
+.admin-tabs button:hover{color:var(--ink)}
+.admin-tabs button[aria-current=page]{color:var(--ink);border-bottom-color:var(--accent)}
+.admin-badge{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:.15rem .45rem;font-size:.68rem}
+.admin-panel h3{font-size:1.05rem}
+.admin-actions{margin-bottom:1.4rem}
+.admin-card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);padding:1.3rem;margin-bottom:1rem}
+.admin-card--row{display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:0 1rem}
+.form-grid select{margin-top:.35rem}
+.field-row{display:flex;flex-direction:column;gap:.35rem;margin-top:.9rem}
+.field-row__label em{font-style:normal}
+.password-form{max-width:26rem}
+.password-form__show{display:flex;gap:.5rem;align-items:center;margin:1rem 0 .4rem;font-size:.92rem;color:var(--mute);cursor:pointer}
+.password-form .btn{margin-top:.8rem}
+.ok-text{color:var(--green)}
+.field-row__label .ok{color:var(--green)}
+.field-row__label .bad{color:var(--accent)}
+.settings-form label.mono{display:block;margin:1rem 0 .35rem}
+.settings-form .form-grid label{display:flex;flex-direction:column;gap:.35rem;margin-top:.9rem}
+.toggle-list{list-style:none;padding:0;margin:.8rem 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(16rem,1fr));gap:.4rem}
+.toggle-list label{display:flex;gap:.6rem;align-items:center;cursor:pointer;padding:.5rem .2rem}
+.toggle-list input{accent-color:var(--accent);width:1.1rem;height:1.1rem}
+.profile-photo{width:7rem;height:7rem;border-radius:var(--radius);overflow:hidden;background:var(--surface-2);display:grid;place-items:center;flex:none}
+.profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:0}
+.profile-photo .avatar-mono{font-size:3rem}
+
+/* content list */
+.admin-filter{display:flex;flex-direction:column;gap:.8rem;margin-bottom:1rem}
+.entry-list{list-style:none;padding:0;margin:1rem 0}
+.entry{display:grid;grid-template-columns:1fr auto;gap:.6rem 1rem;align-items:center;padding:1rem 0;border-top:1px solid var(--rule)}
+.entry--hidden{opacity:.65}
+.entry__main{display:flex;flex-direction:column;gap:.15rem;min-width:0}
+.entry__kind{color:var(--accent)}
+.entry__title{font-weight:600;overflow-wrap:anywhere}
+.entry__actions{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:flex-end}
+.entry__actions .btn{padding:.5rem .85rem;font-size:.66rem}
+.entry__del:hover{background:var(--danger);border-color:var(--danger);color:#fff}
+.entry__details{grid-column:1/-1;background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius-sm);padding:.4rem 1.1rem 1.1rem}
+.entry__details .note{margin:.9rem 0 0}
+.edit-preview{color:var(--mute);font-size:.92rem;overflow-wrap:anywhere}
+
+/* visitors */
+.overview__bar{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.4rem}
+.overview__bar .note{max-width:36rem;margin:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(10.5rem,1fr));gap:.8rem;margin:0 0 1.4rem}
+.tile-stat{background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.2rem}
+.tile-stat dt{font:500 .7rem/1.4 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.tile-stat dd{margin:0;font:400 2.6rem/1.05 var(--font-display);color:var(--ink);font-variant-numeric:tabular-nums}
+.tile-stat .note{font-size:.78rem}
+.tile-stat--live dt::before{content:'';display:inline-block;width:.5rem;height:.5rem;border-radius:50%;background:var(--green);margin-right:.45rem;vertical-align:.05rem;animation:blink 2s infinite}
+.chart{margin:0 0 1.4rem;background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);padding:1.1rem 1.2rem}
+.chart__head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.4rem 1rem;margin-bottom:.6rem}
+.chart__head h3{margin:0}
+.chart__head .note{font-variant-numeric:tabular-nums}
+.chart__svg{width:100%;height:auto;display:block;overflow:visible}
+.chart__grid{stroke:var(--rule);stroke-width:1}
+.chart__base{stroke:var(--mute);stroke-width:1}
+.chart__axis{fill:var(--mute);font:400 11px var(--font-mono)}
+@media (max-width:600px){.chart__axis{font-size:22px}}
+.chart__bar{fill:var(--accent);transition:opacity .15s}
+.chart__svg:hover .chart__bar{opacity:.55}
+.chart__svg:hover .chart__bar.is-hover{opacity:1}
+.chart__table{margin-top:.6rem}
+.chart__table summary{cursor:pointer}
+.chart__table table{width:100%;border-collapse:collapse;margin-top:.6rem;font-size:.88rem;font-variant-numeric:tabular-nums}
+.chart__table th,.chart__table td{text-align:left;padding:.35rem .4rem;border-bottom:1px solid var(--rule)}
+.chart__table td+td,.chart__table th+th{text-align:right}
+.overview__lists{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:1rem}
+.rank{background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);padding:1.1rem 1.2rem}
+.rank ol{list-style:none;padding:0;margin:.4rem 0 0}
+.rank li{position:relative;display:flex;justify-content:space-between;gap:1rem;padding:.42rem .5rem;font-size:.9rem}
+.rank__meter{position:absolute;inset:2px auto 2px 0;background:color-mix(in srgb,var(--accent) 16%,transparent);border-radius:4px;z-index:0}
+.rank__label,.rank__n{position:relative;z-index:1}
+.rank__label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rank__label a{text-decoration:none}
+.rank__label a:hover{text-decoration:underline}
+.rank__n{font-variant-numeric:tabular-nums;color:var(--ink)}
+@media (max-width:600px){
+  .entry{grid-template-columns:1fr}
+  .entry__actions{justify-content:flex-start}
+  .tile-stat dd{font-size:2.1rem}
+}
 /* ---------- legacy classes still used by editor panels ---------- */
 .list{list-style:none;padding:0;margin:0}
 .list li{border-top:1px solid var(--rule);padding:1rem 0}
@@ -451,7 +546,7 @@ input[type=checkbox],input[type=radio]{width:auto;display:inline-block}
   .marquee__track{animation:none}
 }
 @media print{
-  .site-header,.site-footer,.edit-toggle,.add-fab,.settings-fab,.upload-fab,.no-print,.skip,.scroll-cue,.strip{display:none!important}
+  .admin-tabs,.site-header,.site-footer,.edit-toggle,.add-fab,.settings-fab,.upload-fab,.no-print,.skip,.scroll-cue,.strip{display:none!important}
   body,.band{background:#fff!important;color:#000!important;--ink:#000;--mute:#444;--rule:#ccc;--surface:#fff}
   .band{padding-block:1.5rem}
   .page-head{padding-top:0}
