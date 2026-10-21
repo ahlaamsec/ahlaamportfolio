@@ -33,7 +33,7 @@ export default function TrashPage() {
     />
     <section className="band band--bold">
       <div className="wrap narrow">
-        {!authed && <p className="muted">Log in with the Editor button to view and restore deleted entries.</p>}
+        {!authed && <p className="muted">Log in on the dashboard at /admin to view and restore deleted entries.</p>}
         {authed && (
           <ul className="rows">
             {deleted.length === 0 && <li className="muted empty">Nothing in the trash.</li>}

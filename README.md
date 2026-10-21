@@ -16,7 +16,7 @@ All static content lives in `content/data.ts`. Anything marked TODO is missing i
 
 ## Password-protected editing (new)
 
-The site now has a built-in editor: click the 🔒 button in the bottom-right corner of any page, enter your password, then click "Edit this site." Editable fields get a dashed outline — click in, type, click away, and it saves straight to the live site. No code, no redeploying.
+The site now has a built-in editor: log in at `/admin` (the first time, you create your password there), then press "Edit this site" in the bar at the bottom-right. Editable fields get a dashed outline — click in, type, click away, and it saves straight to the live site. No code, no redeploying.
 
 **What's editable right now:** the homepage hero line, the About bio, the "off the clock" note, the CV leadership note, every writing piece's title and full text (all 100+ pieces), the PetanqueAI case study sections, and the findings box on any cyber lab entry that doesn't have a full write-up yet (SQLPad, Kioptrix, SecureShop, TryHackMe) — so you can fill those in directly on the live site once you have your notes.
 
@@ -34,17 +34,17 @@ This moved off pure static hosting to support saving, so it needs two things set
 1. Push this project to a GitHub repo.
 2. Import it at https://vercel.com/new.
 3. Before the first deploy, add these Environment Variables in the Vercel project settings:
-   - `EDIT_PASSWORD` — whatever password you want to log in with.
+   - `EDIT_PASSWORD` — optional. Leave it out and create your password on `/admin` instead (see "Your admin password" below).
    - `EDIT_SECRET` — any long random string (this signs your login session; generate one at e.g. https://1password.com/password-generator or just mash the keyboard for 40+ characters).
    - `UPSTASH_REDIS_REST_URL` — from step 1.
    - `UPSTASH_REDIS_REST_TOKEN` — from step 1.
 4. Deploy. Your edits will now persist permanently, and only someone with your password can make them.
 
-**If you skip this setup:** the site still works perfectly as a normal read-only portfolio — the 🔒 button will just say "Wrong password" / fail to save, since there's nothing to check against. Nothing breaks either way.
+**If you skip this setup:** the site still works perfectly as a normal read-only portfolio — `/admin` will warn that storage is not connected and nothing can be saved. Nothing breaks either way.
 
 ## Adding brand-new writeups (not just editing existing ones)
 
-Once logged in (via the 🔒 button), a second floating button appears — a **+** near the bottom-right. Click it, pick **Writing** or **Cyber Lab**, fill in the form, hit Publish, and you're taken straight to the new page at its own URL (e.g. `/writing/your-title-here`). It shows up immediately in the Writing Archive and Cyber Lab listings, searchable and filterable like everything else.
+Once logged in (at `/admin`), a second floating button appears — a **+** near the bottom-right. Click it, pick **Writing** or **Cyber Lab**, fill in the form, hit Publish, and you're taken straight to the new page at its own URL (e.g. `/writing/your-title-here`). It shows up immediately in the Writing Archive and Cyber Lab listings, searchable and filterable like everything else.
 
 - **Writing**: title, category, type, tags, and the content itself (separate paragraphs with a blank line — same convention as everything else on the site). Reading time is calculated automatically.
 - **Cyber Lab**: title, platform, status, tools, objective, and findings — same layout as SQLPad/Kioptrix/SecureShop/TryHackMe currently use, so a lab you add this way gets the same "objective / tools / findings" page, editable later through the same inline-edit system.
@@ -88,7 +88,7 @@ Left as plain structural chrome (not editable, on purpose): nav menu labels, but
 
 ## Editing write-ups (block editor)
 
-Log in, press **Edit this site**, then open any write-up or lab. Every paragraph, heading, bullet and picture is its own block. Each block has up/down arrows and a delete button. The faint **+ Text / + Heading / + Image** row between blocks inserts something at that exact spot. **Add a document at the end** reads a .docx, .md or .txt file and appends it with its pictures in the original order.
+Log in at /admin, press **Edit pages in place**, then open any write-up or lab. Every paragraph, heading, bullet and picture is its own block. Each block has up/down arrows and a delete button. The faint **+ Text / + Heading / + Image** row between blocks inserts something at that exact spot. **Add a document at the end** reads a .docx, .md or .txt file and appends it with its pictures in the original order.
 
 ## Profile photo
 
@@ -129,7 +129,7 @@ Go to `/admin` (or press **Dashboard** in the editor bar) and log in with your e
 - **Design**: colours and presets, headings and body fonts, text size, capital or normal-case headings, and the menu text.
 - **Messages**: what people sent through the contact form, with Reply by email.
 - **All edits**: every change you have ever saved, each with an **Undo** that puts the original back.
-- **Password**: change your login password (you need the current one). It is stored only as a salted hash.
+- **Password**: change your login password (you need the current one). It is stored only as a salted hash, never as plain text.
 
 In edit mode every heading, paragraph and button label on the home, CV, Writing and Cyber Lab pages can now be clicked and changed, including lab titles, objectives and tools.
 
@@ -137,6 +137,18 @@ In edit mode every heading, paragraph and button label on the home, CV, Writing 
 
 Counting happens on your own server and in the same Upstash database, so there is no outside tracker and no cookie banner is needed. A visitor is a one-way daily fingerprint of IP address and browser, so the same person counts once per day and cannot be followed from day to day; raw IP addresses are never stored. Bots, your own visits while logged in, the dashboard itself, and browsers with "Do Not Track" or Global Privacy Control switched on are not counted. Countries only appear on Vercel (they come from Vercel's location header). Daily numbers are kept for about 13 months.
 
+### Your admin password
+
+You don't need `EDIT_PASSWORD` in Vercel any more. When no password exists, `/admin` shows **Create your admin password**. Choose one (at least 10 characters) and you are logged in. From then on you log in at `/admin` with it, and you can change it under the **Password** tab. Visitors no longer see any login button on the site. Logging in only happens at `/admin`.
+
+Create your password straight after deploying. Until you do, whoever opens `/admin` first could create it. If `/admin` asks you to log in when you never set a password, someone else did: use the reset below.
+
+`EDIT_SECRET` and the two Upstash settings are still required.
+
 ### Forgot your password?
 
-The dashboard can't help if you can't log in, so the way back in is through Vercel: open the project, go to **Settings → Environment Variables**, give `EDIT_PASSWORD` a new value, then **Redeploy** the latest deployment. The new value becomes your password and replaces any password you set in the dashboard. You can then log in and choose a different one under **Password** if you like.
+In Vercel, open the project and go to **Settings → Environment Variables**:
+- If `EDIT_PASSWORD` is there, **delete it**. `/admin` will then offer to create a new password.
+- If it isn't there, **add it** with a new password. That becomes your password.
+
+Then **Redeploy** the latest deployment. Adding, changing or removing `EDIT_PASSWORD` always resets the password made on `/admin`.

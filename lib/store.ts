@@ -231,16 +231,29 @@ export async function deleteOverrides(ids: string[]): Promise<boolean> {
   return (await command(['HDEL', OVERRIDES_HASH_KEY, ...ids])).ok;
 }
 
-// ---- dashboard password ----
-// A password set from the dashboard, stored only as a salted scrypt hash.
 
-const PASSWORD_KEY = 'portfolio:password';
+// ---- admin password ----
+// Stored only as a salted scrypt hash, under a key that depends on the current
+// EDIT_PASSWORD setting (the "tag"), so changing that setting starts fresh.
+
+const PASSWORD_PREFIX = 'portfolio:password:';
 export type PasswordRecord = { salt: string; hash: string; envTag: string; at: string };
 
-export async function getPasswordRecord(): Promise<PasswordRecord | null> {
-  return getJSON<PasswordRecord | null>(PASSWORD_KEY, null);
+export async function getPasswordRecord(tag: string): Promise<PasswordRecord | null> {
+  return getJSON<PasswordRecord | null>(PASSWORD_PREFIX + tag, null);
 }
 
-export async function setPasswordRecord(rec: PasswordRecord): Promise<boolean> {
-  return setJSON(PASSWORD_KEY, rec);
+export async function setPasswordRecord(tag: string, rec: PasswordRecord): Promise<boolean> {
+  return setJSON(PASSWORD_PREFIX + tag, rec);
+}
+
+// Saves the first password only if none exists yet, in one step, so two people
+// can never both create one.
+export async function claimPasswordRecord(tag: string, rec: PasswordRecord): Promise<boolean> {
+  const r = await command(['SET', PASSWORD_PREFIX + tag, JSON.stringify(rec), 'NX']);
+  return r.ok && r.result === 'OK';
+}
+
+export async function deletePasswordRecord(tag: string): Promise<boolean> {
+  return (await command(['DEL', PASSWORD_PREFIX + tag])).ok;
 }

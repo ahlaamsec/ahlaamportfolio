@@ -29,11 +29,11 @@ const TABS = [
 type TabKey = (typeof TABS)[number]['key'];
 
 export default function AdminDashboard({ builtins }: { builtins: BuiltinEntry[] }) {
-  const { authed, login, logout, editing, setEditing } = useEditMode();
+  const { authed, ready, needsSetup, login, setup, logout, editing, setEditing } = useEditMode();
   const { configured } = useContent();
   const [tab, setTab] = useState<TabKey>('overview');
-  const [checked, setChecked] = useState(false);
   const [password, setPassword] = useState('');
+  const [again, setAgain] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [unread, setUnread] = useState(0);
@@ -46,11 +46,8 @@ export default function AdminDashboard({ builtins }: { builtins: BuiltinEntry[] 
     };
     fromHash();
     window.addEventListener('hashchange', fromHash);
-    // Give the login check a moment before showing the password form.
-    const t = setTimeout(() => setChecked(true), 700);
-    return () => { window.removeEventListener('hashchange', fromHash); clearTimeout(t); };
+    return () => window.removeEventListener('hashchange', fromHash);
   }, []);
-  useEffect(() => { if (authed) setChecked(true); }, [authed]);
 
   // The floating editor buttons repeat what the dashboard already has, so hide them here.
   useEffect(() => {
@@ -70,10 +67,15 @@ export default function AdminDashboard({ builtins }: { builtins: BuiltinEntry[] 
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true); setError(null);
-    const err = await login(password);
+    setError(null);
+    if (needsSetup) {
+      if (password.length < 10) { setError('Use at least 10 characters.'); return; }
+      if (password !== again) { setError('The two passwords are different.'); return; }
+    }
+    setBusy(true);
+    const err = needsSetup ? await setup(password) : await login(password);
     setBusy(false);
-    if (err) setError(err); else setPassword('');
+    if (err) setError(err); else { setPassword(''); setAgain(''); }
   }
 
   if (!authed) {
@@ -82,13 +84,29 @@ export default function AdminDashboard({ builtins }: { builtins: BuiltinEntry[] 
         <div className="wrap narrow">
           <p className="kicker">Owner only</p>
           <h1 className="display display--page">Dashboard</h1>
-          {checked && (
+          {ready && (
             <form className="admin-login" onSubmit={submit}>
-              <label htmlFor="admin-pw" className="mono">Password</label>
-              <input id="admin-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus autoComplete="current-password" />
-              <button className="btn" type="submit" disabled={busy}>{busy ? 'Checking…' : 'Log in'}</button>
+              {needsSetup && (
+                <>
+                  <h2 className="subhead">Create your admin password</h2>
+                  <p className="note">There is no password yet. The one you choose here is what you will use to log in from now on. Pick something only you know, at least 10 characters.</p>
+                </>
+              )}
+              <label htmlFor="admin-pw" className="mono">{needsSetup ? 'New password' : 'Password'}</label>
+              <input id="admin-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus autoComplete={needsSetup ? 'new-password' : 'current-password'} />
+              {needsSetup && (
+                <>
+                  <label htmlFor="admin-pw2" className="mono">Type it again</label>
+                  <input id="admin-pw2" type="password" value={again} onChange={(e) => setAgain(e.target.value)} autoComplete="new-password" />
+                </>
+              )}
+              <button className="btn" type="submit" disabled={busy}>
+                {busy ? (needsSetup ? 'Creating…' : 'Checking…') : needsSetup ? 'Create password and log in' : 'Log in'}
+              </button>
               {error && <p className="note edit-error">{error}</p>}
-              <p className="note">Forgot it? In Vercel, give EDIT_PASSWORD a new value under Settings, Environment Variables, then redeploy.</p>
+              {!needsSetup && (
+                <p className="note">Forgot it? In Vercel, delete EDIT_PASSWORD (or give it a new value) under Settings, Environment Variables, then redeploy and come back here.</p>
+              )}
             </form>
           )}
         </div>

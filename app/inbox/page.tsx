@@ -23,7 +23,7 @@ export default function Inbox() {
     <PageHead kicker="Editor" title="Inbox" back={['Home', '/']} />
     <section className="band band--bold">
       <div className="wrap narrow">
-        {!authed && <p className="muted">Log in with the Editor button to read your messages.</p>}
+        {!authed && <p className="muted">Log in on the dashboard at /admin to read your messages.</p>}
         {authed && msgs === null && <p className="muted">Loading…</p>}
         {authed && msgs && msgs.length === 0 && <p className="muted">No messages yet.</p>}
         {authed && msgs?.map((m) => (

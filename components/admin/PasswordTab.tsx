@@ -70,9 +70,9 @@ export default function PasswordTab() {
       <section className="admin-card">
         <h3>If you forget it</h3>
         <p className="note">
-          In Vercel, open this project, go to Settings, then Environment Variables, and give <code>EDIT_PASSWORD</code> a new value.
-          Then redeploy (Deployments, the three dots on the latest one, Redeploy). The new value becomes your password and
-          replaces any password set here.
+          In Vercel, open this project and go to Settings, then Environment Variables. If <code>EDIT_PASSWORD</code> is there,
+          delete it; /admin will then let you create a new password. If it isn't there, add it with a new password; that becomes
+          your password. Either way, redeploy afterwards (Deployments, the three dots on the latest one, Redeploy).
         </p>
       </section>
     </div>

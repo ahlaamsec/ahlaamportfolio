@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { getPasswordRecord } from './store';
+import { getPasswordRecord, setPasswordRecord, claimPasswordRecord, deletePasswordRecord } from './store';
 
 const SESSION_HOURS = 12;
 
@@ -48,14 +48,16 @@ export function checkPassword(input: string): boolean {
   return crypto.timingSafeEqual(a, b);
 }
 
-// ---- password set from the dashboard ----
-// It is tied to the current EDIT_PASSWORD: changing EDIT_PASSWORD in Vercel
-// makes the stored one stop counting, which is the way back in if it is forgotten.
+// ---- admin password ----
+// The password is normally created on /admin and stored only as a salted scrypt
+// hash. It is tied to the current EDIT_PASSWORD value (which may be empty):
+// adding, changing or removing EDIT_PASSWORD in Vercel makes the stored one stop
+// counting, which is the way back in if it is forgotten.
 
 export const MIN_PASSWORD_LENGTH = 10;
 
-function envTag(): string {
-  return crypto.createHmac('sha256', getSecret() || '').update(`pw|${process.env.EDIT_PASSWORD || ''}`).digest('hex').slice(0, 24);
+function envTag(envPassword = process.env.EDIT_PASSWORD || ''): string {
+  return crypto.createHmac('sha256', getSecret() || '').update(`pw|${envPassword}`).digest('hex').slice(0, 24);
 }
 
 function scrypt(password: string, salt: string): Promise<Buffer> {
@@ -64,19 +66,47 @@ function scrypt(password: string, salt: string): Promise<Buffer> {
   });
 }
 
-export async function hashPassword(password: string): Promise<{ salt: string; hash: string; envTag: string; at: string }> {
+async function hashPassword(password: string): Promise<{ salt: string; hash: string; envTag: string; at: string }> {
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = (await scrypt(password, salt)).toString('hex');
   return { salt, hash, envTag: envTag(), at: new Date().toISOString() };
 }
 
-// Checks against the dashboard password when one is active, otherwise EDIT_PASSWORD.
+async function activeRecord() {
+  const rec = await getPasswordRecord(envTag());
+  return rec && rec.salt && rec.hash ? rec : null;
+}
+
+// 'stored': a password made on /admin is in use. 'env': EDIT_PASSWORD is in use.
+// 'none': no password exists yet, so /admin offers to create one.
+export async function passwordMode(): Promise<'stored' | 'env' | 'none'> {
+  if (await activeRecord()) return 'stored';
+  return process.env.EDIT_PASSWORD ? 'env' : 'none';
+}
+
 export async function verifyPassword(input: string): Promise<boolean> {
-  const rec = await getPasswordRecord();
-  if (rec && rec.envTag === envTag() && rec.salt && rec.hash) {
+  const rec = await activeRecord();
+  if (rec) {
     const got = await scrypt(input, rec.salt);
     const want = Buffer.from(rec.hash, 'hex');
     return got.length === want.length && crypto.timingSafeEqual(got, want);
   }
   return checkPassword(input);
+}
+
+// Creates the very first password. Fails if one already exists.
+export async function createFirstPassword(password: string): Promise<boolean> {
+  if (await passwordMode() !== 'none') return false;
+  return claimPasswordRecord(envTag(), await hashPassword(password));
+}
+
+export async function changePassword(password: string): Promise<boolean> {
+  return setPasswordRecord(envTag(), await hashPassword(password));
+}
+
+// After a reset through EDIT_PASSWORD, forget the password that was made on
+// /admin without it, so removing EDIT_PASSWORD later reopens "create a password"
+// instead of bringing a forgotten one back.
+export async function forgetUnsetPassword(): Promise<void> {
+  if (process.env.EDIT_PASSWORD) await deletePasswordRecord(envTag(''));
 }
